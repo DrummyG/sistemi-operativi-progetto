@@ -9,61 +9,20 @@
 #include <signal.h>
 #include <sys/time.h>
 
+#include "regole_gioco.h"
+
+//gcc main.c prato_tane.c schermo.c npc_rana.c regole_gioco.c -l ncurses -o esercizio
+
 //costanti (le uso ovunque, così non devo riscrivere i numeri ogni volta)
 #define DIM_NOME 50  //mi serve per sapere la lunghezza massima del nome utente
-#define TEMPO_MASSIMO 90 // questo è il tempo massimo del timer
 
 //variabili globali (le metto qui per comodità, così le uso in più funzioni)
 int max_righe;  //numero di righe del terminale
 int max_colonne;  // numero di colonne del terminale
 
-//campo di gioco orizzontale
-int gioco_sinistra = 30; //da dove parte il campo di gioco sulla sinistra
-int gioco_destra; //dove finisce il campo di gioco a destra
-int larghezza_gioco;   //quanti caratteri "larghi" è il campo orizzontalmente
-
-//prato inferiore (alto 6)
-int prato_altezza = 6; //il  prato in fondo allo schermo è alto 6 righe
-int riga_inizio_prato;
-int riga_fine_prato;
-
-//secondo prato dopo le tane (anche lui alto 6)
-int prato2_altezza = 6;
-int prato2_inizio_riga;
-int prato2_fine_riga;
-
-//parametri delle tane
-int tana_altezza = 5; //le tane sono alte 5 righe
-int tana_inizio_riga;
-int tana_fine_riga;
-int num_tane = 5; //quante tane voglio
-int spazio = 3;  //distanza orizzontale tra ogni tana
-int spazio_totale;  //ci calcolo lo spazio totale occupato
-int totale_per_le_tane; //quanta larghezza ho a disposizione per le tane
-int larghezza_tana; //larghezza della singola tana
-int offset_tane;    //offset iniziale orizzontale, se non si dividono perfettamente
-//mi serve per allineare bene le tane evitando che l’ultima risulti tagliata o vada a finire fuori dallo spazio di gioco
-
 //variabili di gioco
-int vite;  //numero di vite del giocatore
-int tempo_rimasto;  //quanto tempo mi rimane (conta alla rovescia)
-int punteggio;  //punteggio (se lo voglio usare in futuro)
 bool pausa;    //flag per vedere se sono in pausa
-bool tane_aperte[5]; //array bool per sapere se la tana i è aperta o no
 const char *nickname; //memorizzo il nome utente
-
-//lo sprite è 2x3 in ascii
-int rana_altezza = 2; //altezza rana
-int rana_larghezza = 3; //larghezza rana
-int rana_x; //posizione x della rana
-int rana_y; //osizione y della rana
-//sprite ascii della rana
-const char *prima_linea_sprite = " O ";
-const char *seconda_linea_sprite = "/|\\";
-
-//pipe tra padre e figlio
-int canale_a_figlio[2];
-int canale_a_padre[2];
 
 //disegno una specie di blocchetto 2x2 per le vite
 void disegna_quadrato_vita(int riga, int colonna) {
@@ -82,60 +41,6 @@ void disegna_quadrato_vita(int riga, int colonna) {
     addstr("__");
     attroff(COLOR_PAIR(7));
     addch('|');
-}
-
-//disegno tutt,le tane gialle, i buchi neri, e i due prati
-void disegna_scenario() {
-    //coloro in giallo le righe da tana_inizio_riga a tana_fine_riga
-    attron(COLOR_PAIR(8));
-    for(int r = tana_inizio_riga; r <= tana_fine_riga; r++) {
-        mvhline(r, gioco_sinistra, ' ', larghezza_gioco);
-    }
-    attroff(COLOR_PAIR(8));
-
-    //se la tana i è aperta, ci disegno un buco nero
-    int riga_inizio_buco = tana_inizio_riga + 1; //parto un po' più sotto per non coprire
-    int riga_fine_buco   = tana_inizio_riga + 4; //altezza del buco
-    for(int i = 0; i < num_tane; i++) {
-        if(tane_aperte[i]) {
-            //calcolo l'inizio della tana in x
-            int inizio_tana_x = gioco_sinistra + offset_tane + i * (larghezza_tana + spazio);
-            //fine a sinistra + offset + i*(larghezza + spazio)
-
-            int inizio_buco_x = inizio_tana_x + 1;
-            int larghezza_buco = larghezza_tana - 1;
-            int fine_buco_x = inizio_buco_x + larghezza_buco - 1;
-
-            //e lo coloro di nero
-            attron(COLOR_PAIR(9));
-            for(int r = riga_inizio_buco; r <= riga_fine_buco; r++) {
-                for(int c = 0; c < larghezza_buco; c++) {
-                    mvaddch(r, inizio_buco_x + c, ' ');
-                }
-            }
-            attroff(COLOR_PAIR(9));
-        }
-    }
-
-    //disegno il prato2
-    attron(COLOR_PAIR(1));
-    for(int r = prato2_inizio_riga; r <= prato2_fine_riga; r++) {
-        mvhline(r, gioco_sinistra, ' ', larghezza_gioco);
-    }
-    attroff(COLOR_PAIR(1));
-
-    //disegno il prato inferiore
-    attron(COLOR_PAIR(1));
-    for(int r = riga_inizio_prato; r <= riga_fine_prato; r++) {
-        mvhline(r, gioco_sinistra, ' ', larghezza_gioco);
-    }
-    attroff(COLOR_PAIR(1));
-}
-
-//disegno sprite
-void disegna_sprite() {
-    mvprintw(rana_y,   rana_x, "%s", prima_linea_sprite);
-    mvprintw(rana_y+1, rana_x, "%s", seconda_linea_sprite);
 }
 
 //disegno  nickname, punteggio, vite e timer
@@ -179,140 +84,6 @@ void disegna_info() {
         mvprintw(riga_in_basso, colonna_centrale + lung_etichetta + i, "|");
     }
     attroff(COLOR_PAIR(4));
-}
-
-//qui controllo le collisioni,, se la rana entra nell'area della tana e questa è aperta, +vita, se chiusa o colonna gialla, -vita
-bool check_tane() {
-    int riga_inizio_buco = tana_inizio_riga + 1; //il buco comincia uno sotto
-    int riga_fine_buco   = tana_inizio_riga + 4;//finisce un po' prima della fine gialla
-
-    // se la rana non tocca neanche la fascia verticale della tana, esco
-    if(rana_y + rana_altezza - 1 < tana_inizio_riga || rana_y > tana_fine_riga) {
-        return false;
-    }
-
-    for(int i = 0; i < num_tane; i++) {
-        //calcolo l'inizio x della tana i
-        int inizio_tana_x = gioco_sinistra + offset_tane + i * (larghezza_tana + spazio);
-        int fine_tana_x = inizio_tana_x + larghezza_tana - 1;
-        int inizio_buco_x = inizio_tana_x + 1;
-        int larghezza_buco = larghezza_tana - 1;
-        int fine_buco_x = inizio_buco_x + larghezza_buco - 1;
-
-        //controllo orizzontalmente
-        bool sovrapposizione_tana =
-                (rana_x + rana_larghezza - 1 >= inizio_tana_x) &&
-                (rana_x <= fine_tana_x);
-
-        //controllo verticalmente
-        bool sovrapposizione_vert_tana =
-                (rana_y + rana_altezza - 1 >= tana_inizio_riga) &&
-                (rana_y <= tana_fine_riga);
-
-        if(sovrapposizione_tana && sovrapposizione_vert_tana) {
-            //controlliamo se stiamo nel buco (in mezzo) oppure sui pilastri gialli
-            bool sovrapposizione_buco =
-                    (rana_x + rana_larghezza - 1 >= inizio_buco_x) &&
-                    (rana_x <= fine_buco_x) &&
-                    (rana_y + rana_altezza - 1 >= riga_inizio_buco) &&
-                    (rana_y <= riga_fine_buco);
-
-            if(sovrapposizione_buco) {
-                //tana aperta => +1 vita, chiusa => -1 vita
-                if(tane_aperte[i]) {
-                    if(vite < 8) vite++;
-                    tempo_rimasto = TEMPO_MASSIMO;
-                    tane_aperte[i] = false;
-                } else {
-                    vite--;
-                    tempo_rimasto = TEMPO_MASSIMO;
-                }
-            } else {
-                //se tocc i pilastri gialli => -1 vita
-                vite--;
-                tempo_rimasto = TEMPO_MASSIMO;
-            }
-
-            //mando un comando 'O' per dire "reset" al figlio
-            char comando = 'O';
-            write(canale_a_figlio[1], &comando, 1);
-
-            //leggo i nuovi x e y del figlio (che avrà resettato la rana)
-            int r_x, r_y;
-            read(canale_a_padre[0], &r_x, sizeof(int));
-            read(canale_a_padre[0], &r_y, sizeof(int));
-            rana_x = r_x;
-            rana_y = r_y;
-
-            return true;
-        }
-    }
-    return false;
-}
-
-//se il tempo arriva a 0, perdo vita e resetto
-void timer_scaduto() {
-    vite--;
-    tempo_rimasto = TEMPO_MASSIMO;
-
-    char comando = 'O';
-    write(canale_a_figlio[1], &comando, 1);
-
-    int r_x, r_y;
-    read(canale_a_padre[0], &r_x, sizeof(int));
-    read(canale_a_padre[0], &r_y, sizeof(int));
-    rana_x = r_x;
-    rana_y = r_y;
-}
-
-//se tutte le tane sono chiuse => vittoria
-bool tutte_tane_chiuse() {
-    for(int i = 0; i < num_tane; i++) {
-        if(tane_aperte[i]) return false;
-    }
-    return true;
-}
-
-//processo figlio, gestisce i movimenti della rana
-void processo_rana(int spawn_riga, int spawn_colonna, int largh, int alt,
-                   int max_colonne_schermo, int max_righe_schermo,
-                   int sinistra_campo, int larghezza_campo) {
-
-    //parto dalla posizione iniziale
-    int pos_x = spawn_colonna;
-    int pos_y = spawn_riga;
-
-    while(true) {
-        char comando;
-        int n = read(canale_a_figlio[0], &comando, 1);
-        if(n > 0) {
-            //se ricevo su e c'è spazio sopra, vado su di 2
-            if(comando == 'U' && pos_y > 0) {
-                pos_y -= 2;
-            }
-                //se giu e ho ancora spazio sotto, vado giù di 2
-            else if(comando == 'D' && pos_y < max_righe_schermo - alt) {
-                pos_y += 2;
-            }
-                //se sinistra, vado a sinistra di 2
-            else if(comando == 'L') {
-                pos_x -= 2;
-            }
-                //se destra, vado a destra di 2
-            else if(comando == 'R') {
-                pos_x += 2;
-            }
-                //se 'O', resetto la rana allo spawn
-            else if(comando == 'O') {
-                pos_x = spawn_colonna;
-                pos_y = spawn_riga;
-            }
-
-            //mando la posizione aggiornata al padre
-            write(canale_a_padre[1], &pos_x, sizeof(int));
-            write(canale_a_padre[1], &pos_y, sizeof(int));
-        }
-    }
 }
 
 //inizio del gioco,preparo tutto, calcolo spawn, fork e avvio
