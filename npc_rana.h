@@ -11,6 +11,7 @@
 #include "prato_tane.h"
 
 #define UDELAY 1000000
+#define UDELAY2 500000
 
 typedef enum {RANA, COCCODRILLO, PROIETTILE} tipo;
 
@@ -41,6 +42,6 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
                    int sinistra_campo, int larghezza_campo);
 
 void disegna_coccodrillo(struct personaggio p);
-void processo_coccodrilli();
+void processo_coccodrilli(struct personaggio coccodrillo);
 
 #endif //PROGETTO_SO_NPC_RANA_H

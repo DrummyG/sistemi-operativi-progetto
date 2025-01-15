@@ -11,6 +11,8 @@
 
 #include "regole_gioco.h"
 
+#define NCOCCODRILLI 90
+
 extern bool pausa;    //flag per vedere se sono in pausa
 extern const char *nickname; //memorizzo il nome utente
 //variabili globali (le metto qui per comodità, così le uso in più funzioni)
@@ -19,6 +21,6 @@ extern int max_colonne;  // numero di colonne del terminale
 
 void disegna_quadrato_vita(int riga, int colonna);
 void disegna_info();
-void funzione_padre(int spawn_colonna, int spawn_riga);
+void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *coccodrilli);
 
 #endif //PROGETTO_SO_PADRE_H

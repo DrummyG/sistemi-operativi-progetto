@@ -28,9 +28,12 @@ void disegna_sprite(struct personaggio p) {
 
 void disegna_coccodrillo(struct personaggio p){
     for(int i = 0; i < p.lunghezza; i++){
-        mvaddch(p.posizione.y,   p.posizione.x + i, 'A');
-        mvaddch(p.posizione.y + 1, p.posizione.x + i, 'V');
+        if(p.posizione.x + i> gioco_sinistra && p.posizione.x + i < gioco_destra){
+            mvaddch(p.posizione.y,   p.posizione.x + i, 'A');
+            mvaddch(p.posizione.y + 1, p.posizione.x + i, 'V');
+        }
     }
+    mvprintw(p.posizione.y, p.posizione.x, "%d", p.id);
 }
 
 //processo figlio, gestisce i movimenti della rana
@@ -78,13 +81,7 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
     }
 }
 
-void processo_coccodrilli(){
-    struct personaggio coccodrillo;
-    coccodrillo.tipo = COCCODRILLO;
-    coccodrillo.lunghezza = 4;
-    coccodrillo.posizione.x = 30 - coccodrillo.lunghezza;
-    coccodrillo.posizione.y = riga_inizio_prato - 2;
-
+void processo_coccodrilli(struct personaggio coccodrillo){
     while(true) {
         //mando la posizione aggiornata al padre
         write(canale_a_padre[1], &coccodrillo, sizeof(struct personaggio));
@@ -92,6 +89,14 @@ void processo_coccodrilli(){
         //movimento coccodrillo
         coccodrillo.posizione.x += 2;
 
-        usleep(UDELAY);
+        if(coccodrillo.posizione.x > gioco_destra){
+            coccodrillo.posizione.x = 30 - coccodrillo.lunghezza;
+        }
+
+        if(0 <= coccodrillo.id && coccodrillo.id < 20){
+            usleep(UDELAY);
+        }else{
+            usleep(UDELAY2);
+        }
     }
 }

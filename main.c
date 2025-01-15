@@ -89,22 +89,52 @@ void inizio(const char *nome_utente) {
                       gioco_sinistra, larghezza_gioco);
     }
 
-    pid_t pid_coccodrilli = fork();
-    if(pid_coccodrilli == -1) {
-        endwin();
-        perror("fork");
-        exit(1);
-    }else if(pid_coccodrilli == 0) {
-        //figlio
-        close(canale_a_figlio[1]);
-        close(canale_a_padre[0]);
-        processo_coccodrilli();
+    //ricordati di aggiungere la deallocazione della memoria
+    struct personaggio *coccodrilli = (struct personaggio*) calloc(NCOCCODRILLI, sizeof(struct personaggio));
+    int y_iniziale = riga_inizio_prato - 2;
+    int x_iniziale = gioco_sinistra;
+    int distanza_coccodrilli = 20;
+    int distanza_coccodrilli_2 = 30;
+    int offset = 10;
+
+    for(int i = 0; i < NCOCCODRILLI; i++) {
+        coccodrilli[i].id = i;
+        coccodrilli[i].tipo = COCCODRILLO;
+        if(i % 2 == 0) {
+            coccodrilli[i].lunghezza = 8;
+        }else{
+            coccodrilli[i].lunghezza = 15;
+        }
+
+        if(i % 5 == 0 && i != 0){
+            y_iniziale -= 2;
+            x_iniziale = gioco_sinistra;
+        }else if(i != 0 && i % 3 == 0){
+            x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli;
+        }else{
+            x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli_2;
+        }
+
+        coccodrilli[i].posizione.x = x_iniziale;
+        coccodrilli[i].posizione.y = y_iniziale;
+
+        pid_t pid_coccodrilli = fork();
+        if(pid_coccodrilli == -1) {
+            endwin();
+            perror("fork");
+            exit(1);
+        }else if(pid_coccodrilli == 0) {
+            //figlio
+            close(canale_a_figlio[1]);
+            close(canale_a_padre[0]);
+            processo_coccodrilli(coccodrilli[i]);
+        }
     }
 
     //padre
     close(canale_a_figlio[0]);
     close(canale_a_padre[1]);
-    funzione_padre(prato_x_centrale, prato_y_centrale);
+    funzione_padre(prato_x_centrale, prato_y_centrale, coccodrilli);
 
 
     //killo il figlio

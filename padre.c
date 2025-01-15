@@ -72,10 +72,9 @@ void disegna_info() {
     attroff(COLOR_PAIR(4));
 }
 
-void funzione_padre(int spawn_colonna, int spawn_riga) {
+void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *coccodrilli) {
     struct personaggio recupero;
     struct personaggio rana; rana.tipo = RANA; rana.lunghezza = 3; rana.posizione.x = spawn_colonna; rana.posizione.y = spawn_riga;
-    struct personaggio coccodrillo; coccodrillo.tipo = COCCODRILLO; coccodrillo.lunghezza = 4; coccodrillo.posizione.x = 30 - coccodrillo.lunghezza; coccodrillo.posizione.y = riga_fine_prato + 1;
 
     //mando un reset iniziale per la rana
     {
@@ -97,7 +96,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga) {
 
         read(canale_a_padre[0], &recupero, sizeof(struct personaggio));
         if(recupero.tipo == RANA) rana = recupero;
-        if(recupero.tipo == COCCODRILLO) coccodrillo = recupero;
+        if(recupero.tipo == COCCODRILLO) coccodrilli[recupero.id] = recupero;
 
         int tasto = getch();
         if(tasto == 'p' || tasto == 'P') {
@@ -148,7 +147,9 @@ void funzione_padre(int spawn_colonna, int spawn_riga) {
         clear();
         disegna_scenario();
         disegna_sprite(rana);
-        disegna_coccodrillo(coccodrillo);
+        for(int i = 0; i < NCOCCODRILLI; i++) {
+            disegna_coccodrillo(coccodrilli[i]);
+        }
         disegna_info();
 
         //se sono in pausa, mostro un messaggio
@@ -167,9 +168,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga) {
             ultimo_secondo = secondi_passati;
             tempo_rimasto--;
             if(tempo_rimasto < 0) {
-                //tempo scaduto
                 timer_scaduto(&rana);
-                //tolto l'if delle vite rimaste c'è già sotto qua è ripetuto
             }
         }
 
