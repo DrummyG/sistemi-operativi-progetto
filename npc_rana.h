@@ -8,21 +8,39 @@
 #include <ncurses.h>
 #include <unistd.h>
 
+#include "prato_tane.h"
+
+#define UDELAY 1000000
+
+typedef enum {RANA, COCCODRILLO, PROIETTILE} tipo;
+
+struct posizione {
+    int x;
+    int y;
+};
+
+struct personaggio {
+    struct posizione posizione;
+    tipo  tipo;
+    int lunghezza;
+    int id;
+};
+
 extern int canale_a_figlio[2];
 extern int canale_a_padre[2];
 
 //lo sprite è 2x3 in ascii
 extern int rana_altezza; //altezza rana
-extern int rana_larghezza; //larghezza rana
-extern int rana_x; //posizione x della rana
-extern int rana_y; //osizione y della rana
 //sprite ascii della rana
 extern const char *prima_linea_sprite;
 extern const char *seconda_linea_sprite;
 
-void disegna_sprite();
-void processo_rana(int spawn_riga, int spawn_colonna, int largh, int alt,
+void disegna_sprite(struct personaggio p);
+void processo_rana(int spawn_riga, int spawn_colonna, int alt,
                    int max_colonne_schermo, int max_righe_schermo,
                    int sinistra_campo, int larghezza_campo);
+
+void disegna_coccodrillo(struct personaggio p);
+void processo_coccodrilli();
 
 #endif //PROGETTO_SO_NPC_RANA_H

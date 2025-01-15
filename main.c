@@ -10,81 +10,12 @@
 #include <sys/time.h>
 
 #include "regole_gioco.h"
+#include "padre.h"
 
-//gcc main.c prato_tane.c schermo.c npc_rana.c regole_gioco.c -l ncurses -o esercizio
+//gcc main.c prato_tane.c schermo.c npc_rana.c regole_gioco.c padre.c -l ncurses -o esercizio
 
 //costanti (le uso ovunque, così non devo riscrivere i numeri ogni volta)
 #define DIM_NOME 50  //mi serve per sapere la lunghezza massima del nome utente
-
-//variabili globali (le metto qui per comodità, così le uso in più funzioni)
-int max_righe;  //numero di righe del terminale
-int max_colonne;  // numero di colonne del terminale
-
-//variabili di gioco
-bool pausa;    //flag per vedere se sono in pausa
-const char *nickname; //memorizzo il nome utente
-
-//disegno una specie di blocchetto 2x2 per le vite
-void disegna_quadrato_vita(int riga, int colonna) {
-    //qui faccio " __ "
-    move(riga, colonna);
-    addch(' ');
-    attron(COLOR_PAIR(7));
-    addstr("__");
-    attroff(COLOR_PAIR(7));
-    addch(' ');
-
-    //qui faccio "|__|"
-    move(riga + 1, colonna);
-    addch('|');
-    attron(COLOR_PAIR(7));
-    addstr("__");
-    attroff(COLOR_PAIR(7));
-    addch('|');
-}
-
-//disegno  nickname, punteggio, vite e timer
-void disegna_info() {
-    int riga_centrale = max_righe / 2; //calcolo una specie di "centro" verticale
-
-    attron(COLOR_PAIR(6) | A_BOLD);
-    mvprintw(riga_centrale - 4, 0, "Username: ");
-    attroff(A_BOLD);
-    printw("%s", nickname);
-
-    attron(A_BOLD);
-    mvprintw(riga_centrale - 2, 0, "Punteggio: ");
-    attroff(A_BOLD);
-    printw("%d", punteggio);
-    attroff(COLOR_PAIR(6));
-
-    int vite_colonna = max_colonne - 7;
-    if(vite_colonna < 0) vite_colonna = 0;
-
-    int vite_riga_inizio = 23;
-    mvprintw(vite_riga_inizio, vite_colonna, "VITE:");
-
-    //disegno i quadratini vita in verticale
-    for(int v = 0; v < vite; v++) {
-        int riga_blocco = vite_riga_inizio + 2 + v * 4;
-        disegna_quadrato_vita(riga_blocco, vite_colonna);
-    }
-
-    //barretta timer
-    int dimensione_barra = 50 * tempo_rimasto / TEMPO_MASSIMO;
-    const char *etichetta = "Timer: ";
-    int lung_etichetta = (int)strlen(etichetta);
-    int lunghezza_totale = lung_etichetta + dimensione_barra;
-    int colonna_centrale = (max_colonne - lunghezza_totale) / 2;
-    int riga_in_basso = max_righe - 1;
-
-    attron(COLOR_PAIR(4));
-    mvprintw(riga_in_basso, colonna_centrale, "%s", etichetta);
-    for(int i = 0; i < dimensione_barra; i++) {
-        mvprintw(riga_in_basso, colonna_centrale + lung_etichetta + i, "|");
-    }
-    attroff(COLOR_PAIR(4));
-}
 
 //inizio del gioco,preparo tutto, calcolo spawn, fork e avvio
 void inizio(const char *nome_utente) {
@@ -125,6 +56,11 @@ void inizio(const char *nome_utente) {
     larghezza_tana = totale_per_le_tane / num_tane;
     offset_tane = (totale_per_le_tane % num_tane) / 2;
 
+    //calcolo la posizione di spawn al centro del prato inferiore
+    int prato_y_centrale = (riga_inizio_prato + riga_fine_prato - rana_altezza) / 2;
+    int prato_x_centrale = gioco_sinistra + (larghezza_gioco - 3) / 2;
+    if(prato_y_centrale % 2 != 0) prato_y_centrale--;
+
     //all'inizio tutte le tane sono aperte
     for(int i = 0; i < num_tane; i++) {
         tane_aperte[i] = true;
@@ -143,187 +79,33 @@ void inizio(const char *nome_utente) {
         endwin();
         perror("fork");
         exit(1);
-    }
-
-    if(pid == 0) {
+    }else if(pid == 0) {
         //figlio
         close(canale_a_figlio[1]);
         close(canale_a_padre[0]);
 
-        //calcolo la posizione di spawn al centro del prato inferiore
-        int prato_y_centrale = (riga_inizio_prato + riga_fine_prato - rana_altezza) / 2;
-        int prato_x_centrale = gioco_sinistra + (larghezza_gioco - rana_larghezza) / 2;
-        if(prato_y_centrale % 2 != 0) prato_y_centrale--;
-
-        processo_rana(prato_y_centrale, prato_x_centrale,
-                      rana_larghezza, rana_altezza,
+        processo_rana(prato_y_centrale, prato_x_centrale, rana_altezza,
                       max_colonne, max_righe,
                       gioco_sinistra, larghezza_gioco);
-        exit(0);
+    }
+
+    pid_t pid_coccodrilli = fork();
+    if(pid_coccodrilli == -1) {
+        endwin();
+        perror("fork");
+        exit(1);
+    }else if(pid_coccodrilli == 0) {
+        //figlio
+        close(canale_a_figlio[1]);
+        close(canale_a_padre[0]);
+        processo_coccodrilli();
     }
 
     //padre
     close(canale_a_figlio[0]);
     close(canale_a_padre[1]);
+    funzione_padre(prato_x_centrale, prato_y_centrale);
 
-    //mando un reset iniziale per la rana
-    {
-        int prato_y_centrale = (riga_inizio_prato + riga_fine_prato - rana_altezza) / 2;
-        int prato_x_centrale = gioco_sinistra + (larghezza_gioco - rana_larghezza) / 2;
-        if(prato_y_centrale % 2 != 0) prato_y_centrale--;
-
-        char comando = 'O';
-        write(canale_a_figlio[1], &comando, 1);
-
-        int r_x, r_y;
-        read(canale_a_padre[0], &r_x, sizeof(int));
-        read(canale_a_padre[0], &r_y, sizeof(int));
-        rana_x = r_x;
-        rana_y = r_y;
-    }
-
-    nodelay(stdscr, true);
-
-    struct timeval tempo_iniziale;
-    struct timeval tempo_attuale;
-    gettimeofday(&tempo_iniziale, NULL);
-    long ultimo_secondo = 0;
-
-    bool fine_gioco = false;
-
-    while(!fine_gioco) {
-        int tasto = getch();
-        if(tasto == 'p' || tasto == 'P') {
-            pausa = !pausa;
-        }
-        else if(!pausa && tasto != ERR) {
-            char comando = 0;
-            if(tasto == KEY_UP) comando = 'U';
-            else if(tasto == KEY_DOWN) comando = 'D';
-            else if(tasto == KEY_LEFT) comando = 'L';
-            else if(tasto == KEY_RIGHT) comando = 'R';
-
-            if(comando != 0) {
-                write(canale_a_figlio[1], &comando, 1);
-                int r_x, r_y;
-                read(canale_a_padre[0], &r_x, sizeof(int));
-                read(canale_a_padre[0], &r_y, sizeof(int));
-                rana_x = r_x;
-                rana_y = r_y;
-
-                //se vado oltre i limiti a sinistra o destra
-                if(rana_x < gioco_sinistra || (rana_x + rana_larghezza - 1) > gioco_destra) {
-                    vite--;
-                    tempo_rimasto = TEMPO_MASSIMO;
-
-                    char comando2 = 'O';
-                    write(canale_a_figlio[1], &comando2, 1);
-                    int rrxx, rryy;
-                    read(canale_a_padre[0], &rrxx, sizeof(int));
-                    read(canale_a_padre[0], &rryy, sizeof(int));
-                    rana_x = rrxx;
-                    rana_y = rryy;
-                }
-
-                //se vado sotto il prato
-                if((rana_y + rana_altezza - 1) > riga_fine_prato) {
-                    vite--;
-                    tempo_rimasto = TEMPO_MASSIMO;
-
-                    char comando2 = 'O';
-                    write(canale_a_figlio[1], &comando2, 1);
-                    int rrxx, rryy;
-                    read(canale_a_padre[0], &rrxx, sizeof(int));
-                    read(canale_a_padre[0], &rryy, sizeof(int));
-                    rana_x = rrxx;
-                    rana_y = rryy;
-                }
-            }
-        }
-
-        //controllo se sto sulle tane
-        check_tane();
-
-        //se tutte le tane sono chiuse => vittoria
-        if(tutte_tane_chiuse()) {
-            clear();
-            attron(COLOR_PAIR(1) | A_BOLD);
-            mvprintw(max_righe / 2 - 1,
-                     (max_colonne - (int)(strlen(nickname) + 25)) / 2,
-                     "COMPLIMENTI %s HAI VINTO", nickname);
-            mvprintw(max_righe / 2 + 1,
-                     (max_colonne - 45) / 2,
-                     "(Premi invio per tornare al menu principale)");
-            attroff(COLOR_PAIR(1) | A_BOLD);
-            refresh();
-
-            nodelay(stdscr, false);
-            int c;
-            do {
-                c = getch();
-            } while(c != 10 && c != KEY_ENTER);
-
-            fine_gioco = true;
-            break;
-        }
-
-        clear();
-        disegna_scenario();
-        disegna_sprite();
-        disegna_info();
-
-        //se sono in pausa, mostro un messaggio
-        if(pausa) {
-            attron(A_BOLD | COLOR_PAIR(3));
-            mvprintw(max_righe / 2, (max_colonne - 15) / 2, "[ GIOCO IN PAUSA ]");
-            attroff(A_BOLD | COLOR_PAIR(3));
-        }
-
-        refresh();
-
-        //gestisco il timer
-        gettimeofday(&tempo_attuale, NULL);
-        long secondi_passati = tempo_attuale.tv_sec - tempo_iniziale.tv_sec;
-        if(!pausa && secondi_passati > ultimo_secondo) {
-            ultimo_secondo = secondi_passati;
-            tempo_rimasto--;
-            if(tempo_rimasto < 0) {
-                //tempo scaduto
-                timer_scaduto();
-                if(vite == 0) {
-                    //se ho finito le vite => game over
-                    clear();
-                    attron(COLOR_PAIR(3));
-                    mvprintw(max_righe / 2, (max_colonne - 10) / 2, "GAME OVER");
-                    attroff(COLOR_PAIR(3));
-                    refresh();
-                    nodelay(stdscr, false);
-                    int c;
-                    do {
-                        c = getch();
-                    } while(c != 10 && c != KEY_ENTER);
-                    fine_gioco = true;
-                    break;
-                }
-            }
-        }
-
-        //se vite = 0 => game over
-        if(vite == 0) {
-            clear();
-            attron(COLOR_PAIR(3));
-            mvprintw(max_righe / 2, (max_colonne - 10) / 2, "GAME OVER");
-            attroff(COLOR_PAIR(3));
-            refresh();
-            nodelay(stdscr, false);
-            int c;
-            do {
-                c = getch();
-            } while(c != 10 && c != KEY_ENTER);
-            fine_gioco = true;
-            break;
-        }
-    }
 
     //killo il figlio
     kill(pid, SIGKILL);

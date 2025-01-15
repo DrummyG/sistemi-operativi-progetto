@@ -10,18 +10,35 @@ int tempo_rimasto;  //quanto tempo mi rimane (conta alla rovescia)
 int punteggio;  //punteggio (se lo voglio usare in futuro)
 
 //se il tempo arriva a 0, perdo vita e resetto
-void timer_scaduto() {
+void timer_scaduto(struct personaggio *rana) {
     vite--;
     tempo_rimasto = TEMPO_MASSIMO;
 
     char comando = 'O';
     write(canale_a_figlio[1], &comando, 1);
 
-    int r_x, r_y;
-    read(canale_a_padre[0], &r_x, sizeof(int));
-    read(canale_a_padre[0], &r_y, sizeof(int));
-    rana_x = r_x;
-    rana_y = r_y;
+
+    read(canale_a_padre[0], rana, sizeof(int));
+}
+
+void controllo_bordi(struct personaggio rana){
+    //se vado oltre i limiti a sinistra o destra
+    if(rana.posizione.x < gioco_sinistra || (rana.posizione.x + rana.lunghezza - 1) > gioco_destra) {
+        vite--;
+        tempo_rimasto = TEMPO_MASSIMO;
+
+        char comando2 = 'O';
+        write(canale_a_figlio[1], &comando2, 1);
+    }
+
+    //se vado sotto il prato
+    if((rana.posizione.y + rana_altezza - 1) > riga_fine_prato) {
+        vite--;
+        tempo_rimasto = TEMPO_MASSIMO;
+
+        char comando2 = 'O';
+        write(canale_a_figlio[1], &comando2, 1);
+    }
 }
 
 //se tutte le tane sono chiuse => vittoria
@@ -33,12 +50,12 @@ bool tutte_tane_chiuse() {
 }
 
 //qui controllo le collisioni,, se la rana entra nell'area della tana e questa è aperta, +vita, se chiusa o colonna gialla, -vita
-bool check_tane() {
+bool check_tane(struct personaggio rana) {
     int riga_inizio_buco = tana_inizio_riga + 1; //il buco comincia uno sotto
     int riga_fine_buco   = tana_inizio_riga + 4;//finisce un po' prima della fine gialla
 
     // se la rana non tocca neanche la fascia verticale della tana, esco
-    if(rana_y + rana_altezza - 1 < tana_inizio_riga || rana_y > tana_fine_riga) {
+    if(rana.posizione.x + rana_altezza - 1 < tana_inizio_riga || rana.posizione.y > tana_fine_riga) {
         return false;
     }
 
@@ -52,21 +69,21 @@ bool check_tane() {
 
         //controllo orizzontalmente
         bool sovrapposizione_tana =
-                (rana_x + rana_larghezza - 1 >= inizio_tana_x) &&
-                (rana_x <= fine_tana_x);
+                (rana.posizione.x + rana.lunghezza - 1 >= inizio_tana_x) &&
+                (rana.posizione.x <= fine_tana_x);
 
         //controllo verticalmente
         bool sovrapposizione_vert_tana =
-                (rana_y + rana_altezza - 1 >= tana_inizio_riga) &&
-                (rana_y <= tana_fine_riga);
+                (rana.posizione.y + rana_altezza - 1 >= tana_inizio_riga) &&
+                (rana.posizione.y <= tana_fine_riga);
 
         if(sovrapposizione_tana && sovrapposizione_vert_tana) {
             //controlliamo se stiamo nel buco (in mezzo) oppure sui pilastri gialli
             bool sovrapposizione_buco =
-                    (rana_x + rana_larghezza - 1 >= inizio_buco_x) &&
-                    (rana_x <= fine_buco_x) &&
-                    (rana_y + rana_altezza - 1 >= riga_inizio_buco) &&
-                    (rana_y <= riga_fine_buco);
+                    (rana.posizione.x + rana.lunghezza - 1 >= inizio_buco_x) &&
+                    (rana.posizione.x <= fine_buco_x) &&
+                    (rana.posizione.y + rana_altezza - 1 >= riga_inizio_buco) &&
+                    (rana.posizione.y <= riga_fine_buco);
 
             if(sovrapposizione_buco) {
                 //tana aperta => +1 vita, chiusa => -1 vita
@@ -83,17 +100,6 @@ bool check_tane() {
                 vite--;
                 tempo_rimasto = TEMPO_MASSIMO;
             }
-
-            //mando un comando 'O' per dire "reset" al figlio
-            char comando = 'O';
-            write(canale_a_figlio[1], &comando, 1);
-
-            //leggo i nuovi x e y del figlio (che avrà resettato la rana)
-            int r_x, r_y;
-            read(canale_a_padre[0], &r_x, sizeof(int));
-            read(canale_a_padre[0], &r_y, sizeof(int));
-            rana_x = r_x;
-            rana_y = r_y;
 
             return true;
         }

@@ -79,6 +79,12 @@ build CMakeFiles/progetto_SO.dir/npc_rana.c.o: C_COMPILER__progetto_SO_unscanned
   OBJECT_DIR = CMakeFiles/progetto_SO.dir
   OBJECT_FILE_DIR = CMakeFiles/progetto_SO.dir
 
+build CMakeFiles/progetto_SO.dir/padre.c.o: C_COMPILER__progetto_SO_unscanned_Debug /Users/davidebalestrino/CLionProjects/progetto-SO/padre.c || cmake_object_order_depends_target_progetto_SO
+  DEP_FILE = CMakeFiles/progetto_SO.dir/padre.c.o.d
+  FLAGS = -g -std=gnu99 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.7 -fcolor-diagnostics
+  OBJECT_DIR = CMakeFiles/progetto_SO.dir
+  OBJECT_FILE_DIR = CMakeFiles/progetto_SO.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target progetto_SO
@@ -87,7 +93,7 @@ build CMakeFiles/progetto_SO.dir/npc_rana.c.o: C_COMPILER__progetto_SO_unscanned
 #############################################
 # Link the executable progetto_SO
 
-build progetto_SO: C_EXECUTABLE_LINKER__progetto_SO_Debug CMakeFiles/progetto_SO.dir/main.c.o CMakeFiles/progetto_SO.dir/prato_tane.c.o CMakeFiles/progetto_SO.dir/schermo.c.o CMakeFiles/progetto_SO.dir/regole_gioco.c.o CMakeFiles/progetto_SO.dir/npc_rana.c.o
+build progetto_SO: C_EXECUTABLE_LINKER__progetto_SO_Debug CMakeFiles/progetto_SO.dir/main.c.o CMakeFiles/progetto_SO.dir/prato_tane.c.o CMakeFiles/progetto_SO.dir/schermo.c.o CMakeFiles/progetto_SO.dir/regole_gioco.c.o CMakeFiles/progetto_SO.dir/npc_rana.c.o CMakeFiles/progetto_SO.dir/padre.c.o
   FLAGS = -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX13.1.sdk -mmacosx-version-min=12.7
   OBJECT_DIR = CMakeFiles/progetto_SO.dir
   POST_BUILD = :

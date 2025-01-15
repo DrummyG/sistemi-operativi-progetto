@@ -11,4 +11,6 @@ add_executable(progetto_SO main.c
         regole_gioco.c
         regole_gioco.h
         npc_rana.c
-        npc_rana.h)
+        npc_rana.h
+        padre.c
+        padre.h)
