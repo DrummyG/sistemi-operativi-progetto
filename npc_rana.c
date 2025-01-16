@@ -87,13 +87,19 @@ void processo_coccodrilli(struct personaggio coccodrillo){
         write(canale_a_padre[1], &coccodrillo, sizeof(struct personaggio));
 
         //movimento coccodrillo
-        coccodrillo.posizione.x += 2;
-
-        if(coccodrillo.posizione.x > gioco_destra){
-            coccodrillo.posizione.x = 30 - coccodrillo.lunghezza;
+        if(coccodrillo.id < 20 || 40 <= coccodrillo.id && coccodrillo.id < 50 || 60 <= coccodrillo.id && coccodrillo.id < 70) {
+            coccodrillo.posizione.x -= 2;
+            if(coccodrillo.posizione.x < gioco_sinistra){
+                coccodrillo.posizione.x = gioco_destra + coccodrillo.lunghezza;
+            }
+        }else{
+            coccodrillo.posizione.x += 2;
+            if(coccodrillo.posizione.x > gioco_destra){
+                coccodrillo.posizione.x = gioco_sinistra - coccodrillo.lunghezza;
+            }
         }
 
-        if(0 <= coccodrillo.id && coccodrillo.id < 20){
+        if(coccodrillo.id < 10 || 30 <= coccodrillo.id && coccodrillo.id < 40 || 50 <= coccodrillo.id && coccodrillo.id < 60) {
             usleep(UDELAY);
         }else{
             usleep(UDELAY2);

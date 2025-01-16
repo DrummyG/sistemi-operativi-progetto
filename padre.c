@@ -146,10 +146,10 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
 
         clear();
         disegna_scenario();
-        disegna_sprite(rana);
         for(int i = 0; i < NCOCCODRILLI; i++) {
             disegna_coccodrillo(coccodrilli[i]);
         }
+        disegna_sprite(rana);
         disegna_info();
 
         //se sono in pausa, mostro un messaggio

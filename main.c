@@ -102,16 +102,24 @@ void inizio(const char *nome_utente) {
         coccodrilli[i].tipo = COCCODRILLO;
         if(i % 2 == 0) {
             coccodrilli[i].lunghezza = 8;
+        }else if(i % 3 == 0){
+            coccodrilli[i].lunghezza = 16;
         }else{
-            coccodrilli[i].lunghezza = 15;
+            coccodrilli[i].lunghezza = 4;
         }
 
         if(i % 5 == 0 && i != 0){
             y_iniziale -= 2;
+            if(y_iniziale > LINES/2 && y_iniziale < riga_fine_prato - 20){
+                y_iniziale = LINES/2 + 1;
+            }
             x_iniziale = gioco_sinistra;
+            if(i % 10 == 0){
+                x_iniziale += offset;
+            }
         }else if(i != 0 && i % 3 == 0){
             x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli;
-        }else{
+        }else if(i != 0){
             x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli_2;
         }
 
