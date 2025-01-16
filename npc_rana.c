@@ -98,7 +98,7 @@ void processo_coccodrilli(struct personaggio coccodrillo){
                 coccodrillo.posizione.x = gioco_sinistra - coccodrillo.lunghezza;
             }
         }
-
+        //delay del movimento, potrei migliorarlo
         if(coccodrillo.id < 10 || 30 <= coccodrillo.id && coccodrillo.id < 40 || 50 <= coccodrillo.id && coccodrillo.id < 60) {
             usleep(UDELAY);
         }else{

@@ -83,7 +83,7 @@ void inizio(const char *nome_utente) {
         //figlio
         close(canale_a_figlio[1]);
         close(canale_a_padre[0]);
-
+         //da eliminare cose inutili nel richiamo della funzione
         processo_rana(prato_y_centrale, prato_x_centrale, rana_altezza,
                       max_colonne, max_righe,
                       gioco_sinistra, larghezza_gioco);
@@ -100,7 +100,7 @@ void inizio(const char *nome_utente) {
     for(int i = 0; i < NCOCCODRILLI; i++) {
         coccodrilli[i].id = i;
         coccodrilli[i].tipo = COCCODRILLO;
-        if(i % 2 == 0) {
+        if(i % 2 == 0) { //decido la lunghezza
             coccodrilli[i].lunghezza = 8;
         }else if(i % 3 == 0){
             coccodrilli[i].lunghezza = 16;
@@ -108,24 +108,24 @@ void inizio(const char *nome_utente) {
             coccodrilli[i].lunghezza = 4;
         }
 
-        if(i % 5 == 0 && i != 0){
+        if(i % 5 == 0 && i != 0){ //vado avanti di riga se ci sono cinque coccodrilli nella riga
             y_iniziale -= 2;
-            if(y_iniziale > LINES/2 && y_iniziale < riga_fine_prato - 20){
-                y_iniziale = LINES/2 + 1;
+            if(y_iniziale > LINES/2 && y_iniziale < riga_fine_prato - 20){ //se ho raggiunto il prato in mezzo
+                y_iniziale = LINES/2 + 1; //salto fino alla fine del prato
             }
             x_iniziale = gioco_sinistra;
             if(i % 10 == 0){
-                x_iniziale += offset;
+                x_iniziale += offset; //lo aggiungo per evitare che i coccodrilli siano alla stessa altezza
             }
-        }else if(i != 0 && i % 3 == 0){
+        }else if(i != 0 && i % 3 == 0){ //distanza tra i coccdrilli laterale
             x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli;
         }else if(i != 0){
             x_iniziale = coccodrilli[i - 1].posizione.x + distanza_coccodrilli_2;
         }
-
+        //assegno posizione
         coccodrilli[i].posizione.x = x_iniziale;
         coccodrilli[i].posizione.y = y_iniziale;
-
+        //avvio processo figlio
         pid_t pid_coccodrilli = fork();
         if(pid_coccodrilli == -1) {
             endwin();

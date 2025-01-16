@@ -73,7 +73,7 @@ void disegna_info() {
 }
 
 void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *coccodrilli) {
-    struct personaggio recupero;
+    struct personaggio recupero; //variabile in cui salvo i valori letti dal figlio
     struct personaggio rana; rana.tipo = RANA; rana.lunghezza = 3; rana.posizione.x = spawn_colonna; rana.posizione.y = spawn_riga;
 
     //mando un reset iniziale per la rana
@@ -93,7 +93,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
     bool fine_gioco = false;
 
     while(!fine_gioco) {
-
+        //leggo una sola volta il valore per evitare confusione
         read(canale_a_padre[0], &recupero, sizeof(struct personaggio));
         if(recupero.tipo == RANA) rana = recupero;
         if(recupero.tipo == COCCODRILLO) coccodrilli[recupero.id] = recupero;
@@ -145,11 +145,11 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
         }
 
         clear();
-        disegna_scenario();
-        for(int i = 0; i < NCOCCODRILLI; i++) {
+        disegna_scenario(); //prima lo scenario
+        for(int i = 0; i < NCOCCODRILLI; i++) { //poi i coccodrilli
             disegna_coccodrillo(coccodrilli[i]);
         }
-        disegna_sprite(rana);
+        disegna_sprite(rana); //poi la rana così sta sopra i coccodrilli
         disegna_info();
 
         //se sono in pausa, mostro un messaggio
