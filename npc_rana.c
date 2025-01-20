@@ -3,6 +3,7 @@
 //
 
 #include <ncurses.h>
+#include <time.h>
 #include "npc_rana.h"
 
 //pipe tra padre e figlio
@@ -22,8 +23,12 @@ const char *seconda_linea_sprite_c = "|||||||||||";
 
 //disegno sprite
 void disegna_sprite(struct personaggio p) {
-    mvprintw(p.posizione.y,   p.posizione.x, "%s", prima_linea_sprite);
-    mvprintw(p.posizione.y + 1, p.posizione.x, "%s", seconda_linea_sprite);
+    for(int i = 0; i < p.lunghezza; i++){
+        if(p.posizione.x + i> gioco_sinistra && p.posizione.x + i < gioco_destra){
+            mvaddch(p.posizione.y,   p.posizione.x + i, prima_linea_sprite[i]);
+            mvaddch(p.posizione.y + 1, p.posizione.x + i, seconda_linea_sprite[i]);
+        }
+    }
 }
 
 void disegna_coccodrillo(struct personaggio p){
@@ -33,7 +38,6 @@ void disegna_coccodrillo(struct personaggio p){
             mvaddch(p.posizione.y + 1, p.posizione.x + i, 'V');
         }
     }
-    mvprintw(p.posizione.y, p.posizione.x, "%d", p.id);
 }
 
 //processo figlio, gestisce i movimenti della rana
@@ -52,6 +56,16 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
     while(true) {
         char comando;
         int n = read(canale_a_figlio[0], &comando, 1);
+
+        int tasto = getch();
+         if(tasto != ERR) {
+            comando = 0;
+            if(tasto == KEY_UP) comando = 'U';
+            else if(tasto == KEY_DOWN) comando = 'D';
+            else if(tasto == KEY_LEFT) comando = 'L';
+            else if(tasto == KEY_RIGHT) comando = 'R';
+        }
+
         if(n > 0) {
             //se ricevo su e c'è spazio sopra, vado su di 2
             if(comando == 'U' && rana.posizione.y > 0) {
@@ -83,6 +97,8 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
 
 void processo_coccodrilli(struct personaggio coccodrillo){
     while(true) {
+        struct timespec ritardo = {0, 50000000}; // 50 ms
+        nanosleep(&ritardo, NULL);
         //mando la posizione aggiornata al padre
         write(canale_a_padre[1], &coccodrillo, sizeof(struct personaggio));
 
