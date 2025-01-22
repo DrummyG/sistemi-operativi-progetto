@@ -55,7 +55,9 @@ void disegna_info() {
         int riga_blocco = vite_riga_inizio + 2 + v * 4;
         disegna_quadrato_vita(riga_blocco, vite_colonna);
     }
+}
 
+void disegna_timer(){
     //barretta timer
     int dimensione_barra = 50 * tempo_rimasto / TEMPO_MASSIMO;
     const char *etichetta = "Timer: ";
@@ -72,11 +74,19 @@ void disegna_info() {
     attroff(COLOR_PAIR(4));
 }
 
+void pulisci_schermo() {
+    for (int y = 0; y < LINES - 1; ++y) {
+        for (int x = gioco_sinistra; x < gioco_sinistra + larghezza_gioco; ++x) {
+            mvaddch(y, x, ' '); // Sostituisce il contenuto con uno spazio vuoto
+        }
+    }
+}
+
 void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *coccodrilli) {
     struct personaggio recupero; //variabile in cui salvo i valori letti dal figlio
     struct personaggio rana; rana.tipo = RANA; rana.lunghezza = 3; rana.posizione.x = spawn_colonna; rana.posizione.y = spawn_riga;
 
-    //mando un reset iniziale per la rana
+    //mando un reset iniziale per la rana //queste righe dovrebbero essere obsolete
     {
         int prato_y_centrale = (riga_inizio_prato + riga_fine_prato - rana_altezza) / 2;
         int prato_x_centrale = gioco_sinistra + (larghezza_gioco - rana.lunghezza) / 2;
@@ -89,6 +99,9 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
     struct timeval tempo_attuale;
     gettimeofday(&tempo_iniziale, NULL);
     long ultimo_secondo = 0;
+
+    int vite_scorse = vite;
+    disegna_info();
 
     bool fine_gioco = false;
 
@@ -103,6 +116,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
             pausa = !pausa;
         } else if(!pausa && tasto != ERR) {
             char comando = 0;
+            //trasformare in uno switch case
             if(tasto == KEY_UP) comando = 'U';
             else if(tasto == KEY_DOWN) comando = 'D';
             else if(tasto == KEY_LEFT) comando = 'L';
@@ -113,6 +127,9 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
                 controllo_bordi(rana);
             }
         }
+
+        controllo_coccodrilli(rana, coccodrilli);
+
 
         //controllo se sto sulle tane
         if(check_tane(rana)){
@@ -151,15 +168,14 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
         }
         disegna_sprite(rana); //poi la rana così sta sopra i coccodrilli
         disegna_info();
-
+        disegna_timer();
+        refresh();
         //se sono in pausa, mostro un messaggio
         if(pausa) {
             attron(A_BOLD | COLOR_PAIR(3));
             mvprintw(max_righe / 2, (max_colonne - 15) / 2, "[ GIOCO IN PAUSA ]");
             attroff(A_BOLD | COLOR_PAIR(3));
         }
-
-        refresh();
 
         //gestisco il timer
         gettimeofday(&tempo_attuale, NULL);

@@ -13,4 +13,5 @@ add_executable(progetto_SO main.c
         npc_rana.c
         npc_rana.h
         padre.c
-        padre.h)
+        padre.h
+        npc_rana.c)

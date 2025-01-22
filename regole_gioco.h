@@ -8,6 +8,7 @@
 #include "npc_rana.h"
 
 #define TEMPO_MASSIMO 90 // questo è il tempo massimo del timer
+#define NCOCCODRILLI 90 // numero di coccodrilli
 
 //variabili di gioco
 extern int vite;  //numero di vite del giocatore
@@ -17,6 +18,8 @@ extern int punteggio;  //punteggio (se lo voglio usare in futuro)
 void timer_scaduto(struct personaggio *rana);
 
 void controllo_bordi(struct personaggio rana);
+
+void controllo_coccodrilli(struct personaggio rana, struct personaggio coccodrilli[]);
 
 bool tutte_tane_chiuse();
 bool check_tane(struct personaggio rana);

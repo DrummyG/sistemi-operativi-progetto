@@ -51,20 +51,44 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
     rana.tipo = RANA;
     rana.lunghezza = 3;
 
+    struct timeval last_update, current_time;
+    gettimeofday(&last_update, NULL); // Tempo iniziale
+
     //parto dalla posizione iniziale
 
     while(true) {
         char comando;
         int n = read(canale_a_figlio[0], &comando, 1);
 
+        gettimeofday(&current_time, NULL);
+        double elapsed = (current_time.tv_sec - last_update.tv_sec) +
+                         (current_time.tv_usec - last_update.tv_usec) / 1000000.0;
+
+        if (elapsed >= comando) {
+            last_update = current_time; // Aggiorna il riferimento temporale
+
+            // Aggiornamenti temporizzati in base al valore di `n`
+            if (comando == 1) {
+                rana.posizione.x -= 2;
+            } else if (comando == 2) {
+                rana.posizione.x += 2;
+            }
+        }
+
+
+
         int tasto = getch();
          if(tasto != ERR) {
+             //deve diventare uno switch case
             comando = 0;
             if(tasto == KEY_UP) comando = 'U';
             else if(tasto == KEY_DOWN) comando = 'D';
             else if(tasto == KEY_LEFT) comando = 'L';
             else if(tasto == KEY_RIGHT) comando = 'R';
         }
+
+        mvprintw(0, 0, "Valore di n: %d", n);
+        refresh();
 
         if(n > 0) {
             //se ricevo su e c'è spazio sopra, vado su di 2
@@ -97,8 +121,7 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
 
 void processo_coccodrilli(struct personaggio coccodrillo){
     while(true) {
-        struct timespec ritardo = {0, 50000000}; // 50 ms
-        nanosleep(&ritardo, NULL);
+
         //mando la posizione aggiornata al padre
         write(canale_a_padre[1], &coccodrillo, sizeof(struct personaggio));
 
@@ -115,10 +138,17 @@ void processo_coccodrilli(struct personaggio coccodrillo){
             }
         }
         //delay del movimento, potrei migliorarlo
-        if(coccodrillo.id < 10 || 30 <= coccodrillo.id && coccodrillo.id < 40 || 50 <= coccodrillo.id && coccodrillo.id < 60) {
-            usleep(UDELAY);
-        }else{
+        if(coccodrillo.id < 20 || 40 <= coccodrillo.id && coccodrillo.id < 50 || 60 <= coccodrillo.id && coccodrillo.id < 70){
             usleep(UDELAY2);
+        }else{
+            usleep(UDELAY);
         }
+
+
+        /*if(coccodrillo.id < 10 || 30 <= coccodrillo.id && coccodrillo.id < 40 || 50 <= coccodrillo.id && coccodrillo.id < 60) {
+            usleep(UDELAY2);
+        }else{
+            usleep(UDELAY);
+        }*/
     }
 }

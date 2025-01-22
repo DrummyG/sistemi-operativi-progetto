@@ -7,11 +7,12 @@
 
 #include <ncurses.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include "prato_tane.h"
 
-#define UDELAY 1000000
-#define UDELAY2 500000
+#define UDELAY 2000000
+#define UDELAY2 1000000
 
 typedef enum {RANA, COCCODRILLO, PROIETTILE} tipo;
 

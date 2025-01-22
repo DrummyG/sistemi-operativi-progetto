@@ -23,16 +23,7 @@ void timer_scaduto(struct personaggio *rana) {
 
 void controllo_bordi(struct personaggio rana){
     //se vado oltre i limiti a sinistra o destra
-    if(rana.posizione.x < gioco_sinistra || (rana.posizione.x + rana.lunghezza - 1) > gioco_destra) {
-        vite--;
-        tempo_rimasto = TEMPO_MASSIMO;
-
-        char comando2 = 'O';
-        write(canale_a_figlio[1], &comando2, 1);
-    }
-
-    //se vado sotto il prato
-    if((rana.posizione.y + rana_altezza - 1) > riga_fine_prato) {
+    if(rana.posizione.x < gioco_sinistra || (rana.posizione.x + rana.lunghezza - 1) > gioco_destra || (rana.posizione.y + rana_altezza - 1) > riga_fine_prato) {
         vite--;
         tempo_rimasto = TEMPO_MASSIMO;
 
@@ -105,4 +96,19 @@ bool check_tane(struct personaggio rana) {
         }
     }
     return false;
+}
+
+void controllo_coccodrilli(struct personaggio rana, struct personaggio coccodrilli[]){
+    char comando = 'O';
+    for(int i = 0; i < NCOCCODRILLI; i++){
+        if(rana.posizione.x >= coccodrilli[i].posizione.x && rana.posizione.x <= coccodrilli[i].posizione.x + coccodrilli[i].lunghezza && rana.posizione.y == coccodrilli[i].posizione.y){
+            if(coccodrilli[i].id < 20 || 40 <= coccodrilli[i].id && coccodrilli[i].id < 50 || 60 <= coccodrilli[i].id && coccodrilli[i].id < 70) {
+                comando = 1; //x -= 2
+                write(canale_a_figlio[1], &comando, 1);
+            }else{
+                comando = 2; //x += 2
+                write(canale_a_figlio[1], &comando, 1);
+            }
+        }
+    }
 }
