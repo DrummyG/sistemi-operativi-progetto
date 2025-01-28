@@ -75,10 +75,8 @@ void disegna_timer(){
 }
 
 void pulisci_schermo() {
-    for (int y = 0; y < LINES - 1; ++y) {
-        for (int x = gioco_sinistra; x < gioco_sinistra + larghezza_gioco; ++x) {
-            mvaddch(y, x, ' '); // Sostituisce il contenuto con uno spazio vuoto
-        }
+    for (int y = prato2_fine_riga; y < LINES; ++y) {
+        mvhline(y, gioco_sinistra, ' ', larghezza_gioco);
     }
 }
 
@@ -103,6 +101,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
     int vite_scorse = vite;
     disegna_info();
 
+
     bool fine_gioco = false;
 
     while(!fine_gioco) {
@@ -116,7 +115,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
             pausa = !pausa;
         } else if(!pausa && tasto != ERR) {
             char comando = 0;
-            //trasformare in uno switch case
+            //trasformare in uno switch case //funzione per la rana non lo deve fare il padre
             if(tasto == KEY_UP) comando = 'U';
             else if(tasto == KEY_DOWN) comando = 'D';
             else if(tasto == KEY_LEFT) comando = 'L';
@@ -139,7 +138,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
         }
 
         //se tutte le tane sono chiuse => vittoria
-        if(tutte_tane_chiuse()) {
+        if(tutte_tane_chiuse()) { //spostare in un'altra funzione
             clear();
             attron(COLOR_PAIR(1) | A_BOLD);
             mvprintw(max_righe / 2 - 1,
@@ -161,15 +160,18 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
             break;
         }
 
-        clear();
+        pulisci_schermo();
         disegna_scenario(); //prima lo scenario
         for(int i = 0; i < NCOCCODRILLI; i++) { //poi i coccodrilli
             disegna_coccodrillo(coccodrilli[i]);
         }
         disegna_sprite(rana); //poi la rana così sta sopra i coccodrilli
-        disegna_info();
+        if(vite != vite_scorse) {
+            disegna_info();
+        }
+        vite_scorse = vite;
         disegna_timer();
-        refresh();
+
         //se sono in pausa, mostro un messaggio
         if(pausa) {
             attron(A_BOLD | COLOR_PAIR(3));
@@ -189,7 +191,7 @@ void funzione_padre(int spawn_colonna, int spawn_riga, struct personaggio *cocco
         }
 
         //se vite = 0 => game over
-        if(vite == 0) {
+        if(vite == 0) { //spostare in un'altra funzione
             clear();
             attron(COLOR_PAIR(3));
             mvprintw(max_righe / 2, (max_colonne - 10) / 2, "GAME OVER");

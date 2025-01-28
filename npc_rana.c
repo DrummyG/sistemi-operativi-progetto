@@ -60,6 +60,7 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
         char comando;
         int n = read(canale_a_figlio[0], &comando, 1);
 
+        //dovremmo risistemarla
         gettimeofday(&current_time, NULL);
         double elapsed = (current_time.tv_sec - last_update.tv_sec) +
                          (current_time.tv_usec - last_update.tv_usec) / 1000000.0;
@@ -87,8 +88,6 @@ void processo_rana(int spawn_riga, int spawn_colonna, int alt,
             else if(tasto == KEY_RIGHT) comando = 'R';
         }
 
-        mvprintw(0, 0, "Valore di n: %d", n);
-        refresh();
 
         if(n > 0) {
             //se ricevo su e c'è spazio sopra, vado su di 2
